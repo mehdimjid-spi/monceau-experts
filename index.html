@@ -771,13 +771,6 @@
 
       </div>
 
-      <div class="cta">
-        <div>
-          <div class="cta-t">Une automatisation gratuite installée cette semaine, sur un cas réel Monceau Experts</div>
-          <div class="cta-s">Sur mesure · sans abonnement par utilisateur · on forme vos équipes</div>
-        </div>
-        <button class="btn-primary" id="testBtn" onclick="bookTest(this)">Réserver le pilote →</button>
-      </div>
     </div>
     <div class="foot"><span class="foot-logo">Greg<b>AI</b></span><span>On forme des HUMAINS, pas des robots · gregai.fr</span></div>
   </div>
@@ -1160,57 +1153,6 @@ function filterOffers(kind,btn){
   document.querySelectorAll('.offer').forEach(o=>{
     o.classList.toggle('hide', kind!=='all' && o.dataset.kind!==kind);
   });
-}
-function bookTest(btn){btn.textContent='✓ Pilote réservé';btn.classList.add('done');
-  toast('Demande de pilote envoyée à <b>GregAI</b> — on revient vers vous sous 24 h');}
-
-/* ═════════ TOOL 3 · SAISIE COMPTABLE ═════════ */
-const ocrRows=[
-  {p:"FAC-2291.pdf",f:"Bouygues Bâtiment",ht:"24 800,00 €",tva:"4 960,00 €",cpt:"605000 · Achats études",st:"auto"},
-  {p:"FAC-2292.pdf",f:"Notaire Maître Dupré",ht:"3 250,00 €",tva:"650,00 €",cpt:"622600 · Honoraires juridiques",st:"auto"},
-  {p:"NDF-114.jpg",f:"Restaurant Le Bristol",ht:"186,36 €",tva:"18,64 €",cpt:"625700 · Réceptions",st:"auto"},
-  {p:"FAC-2293.pdf",f:"EDF Pro · Immeuble Hoche",ht:"1 240,00 €",tva:"248,00 €",cpt:"606100 · Énergie",st:"auto"},
-  {p:"FAC-2294.pdf",f:"Cabinet Architecture LDM",ht:"42 500,00 €",tva:"8 500,00 €",cpt:"622600 · Honoraires études",st:"check",
-    fix:"⚠ Montant > seuil de validation (15 k€). Routé vers double validation — l'IA a pré-rempli l'écriture, l'associé valide."},
-  {p:"FAC-2295.pdf",f:"Foncia Property Management",ht:"890,00 €",tva:"178,00 €",cpt:"614000 · Charges locatives",st:"auto"},
-  {p:"FAC-2296.pdf",f:"Garage Hoche Auto",ht:"320,00 €",tva:"30,00 €",cpt:"615500 · Entretien véhicules",st:"bad",
-    fix:"⛔ TVA incohérente : 30,00 € pour 320,00 € HT ≈ 9,4 %, taux non standard. Facture bloquée, demande de justificatif client déclenchée."},
-  {p:"FAC-2290.pdf",f:"Bouygues Bâtiment",ht:"24 800,00 €",tva:"4 960,00 €",cpt:"605000 · Achats études",st:"bad",
-    fix:"⛔ Doublon probable de FAC-2291 (même fournisseur, même montant, même mois). Mis en quarantaine pour éviter une double comptabilisation."},
-];
-const ocrBadge={auto:['b-auto','✓ Écriture auto'],check:['b-check','⚠ À valider'],bad:['b-bad','⛔ Bloquée'],wait:['b-wait','· en file']};
-document.getElementById('runOCR').addEventListener('click',function(){
-  const btn=this;btn.disabled=true;
-  const tb=document.querySelector('#ocrTbl tbody');tb.innerHTML='';
-  const bar=document.getElementById('ocrBar'),status=document.getElementById('ocrStatus');
-  ocrRows.forEach((r,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="mono">${r.p}</td><td>—</td><td class="mono">—</td><td class="mono">—</td><td>—</td>
-      <td><span class="badge b-wait">· en file</span></td>`;
-    tb.appendChild(tr);r._tr=tr;
-  });
-  const steps=["Lecture OCR des pièces…","Reconnaissance fournisseurs…","Affectation au plan comptable…","Contrôle TVA & cohérence…","Détection doublons & anomalies…"];
-  let s=0;const si=setInterval(()=>{status.innerHTML='▸ '+(steps[s]||steps[steps.length-1]);s++;if(s>steps.length)clearInterval(si);},520);
-  let i=0;
-  function next(){
-    if(i>0)ocrRows[i-1]._tr.classList.remove('scanning');
-    if(i>=ocrRows.length){bar.style.width='100%';clearInterval(si);
-      status.innerHTML='<span style="color:var(--green);font-weight:600">✓ Traitement terminé · 5 écritures auto · 1 à valider · 2 bloquées</span>';
-      finishOCR();btn.disabled=false;btn.textContent='✓ Traitement terminé — relancer';return;}
-    const r=ocrRows[i],tr=r._tr;tr.classList.add('scanning');
-    bar.style.width=Math.round((i+1)/ocrRows.length*100)+'%';
-    setTimeout(()=>{const b=ocrBadge[r.st];
-      tr.className=r.st==='bad'?'bad':r.st==='check'?'flag':'';
-      tr.innerHTML=`<td class="mono">${r.p}</td><td><b>${r.f}</b></td><td class="mono">${r.ht}</td><td class="mono">${r.tva}</td>
-        <td>${r.cpt}</td><td><span class="badge ${b[0]}">${b[1]}</span>${r.fix?`<span class="fix">${r.fix}</span>`:''}</td>`;
-      if(r.fix)tr.style.cursor='pointer',tr.onclick=()=>tr.classList.toggle('reveal');
-      i++;setTimeout(next,260);},420);
-  }
-  setTimeout(next,300);
-});
-function finishOCR(){
-  const kp=document.getElementById('ocrKpis');kp.style.display='grid';
-  animateVal('o-auto',5);animateVal('o-check',1);animateVal('o-bad',2);animateVal('o-time',42);
 }
 function animateVal(id,to,suf){suf=suf||'';let n=0;const el=document.getElementById(id);const st=Math.max(1,to/30);
   const iv=setInterval(()=>{n+=st;if(n>=to){n=to;clearInterval(iv);}el.textContent=Math.round(n)+suf;},25);}
